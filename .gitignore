@@ -1,0 +1,15 @@
+# Logs
+logs/*.log
+*.log
+
+# Session archives (uncomment if you don't want to track these)
+# Session_Archives/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

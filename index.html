@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/MarkerCluster.css">
+        <link rel="stylesheet" href="css/MarkerCluster.Default.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <style>
+        /* ===== RESPONSIVE MAP DESIGN ===== */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Map Header */
+        .map-header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            max-width: 90vw;
+        }
+
+        .map-title {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 600;
+            color: #2c2c2c;
+            margin: 0;
+            text-align: center;
+        }
+
+        .map-subtitle {
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            color: #666;
+            margin: 5px 0 0 0;
+            text-align: center;
+        }
+
+        /* Popups */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 15px;
+            max-width: 400px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .popup-header {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c2c2c;
+            margin: 0 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .popup-field {
+            margin: 10px 0;
+        }
+
+        .popup-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .popup-value {
+            color: #333;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        .popup-narrative {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #d32f2f;
+            margin: 10px 0;
+        }
+
+        .death-toll-highlight {
+            background: #ffebee;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #c62828;
+            font-weight: 600;
+            color: #c62828;
+        }
+
+        /* Controls */
+        .leaflet-control-layers {
+            max-width: 350px;
+        }
+
+        /* Marker Cluster Styling */
+        .marker-cluster-small,
+        .marker-cluster-medium,
+        .marker-cluster-large {
+            background-color: rgba(198, 40, 40, 0.6);
+        }
+
+        .marker-cluster-small div,
+        .marker-cluster-medium div,
+        .marker-cluster-large div {
+            background-color: rgba(198, 40, 40, 0.8);
+            color: white;
+            font-weight: 600;
+        }
+
+        .marker-cluster {
+            background-clip: padding-box;
+            border-radius: 20px;
+        }
+
+        .marker-cluster div {
+            width: 30px;
+            height: 30px;
+            margin-left: 5px;
+            margin-top: 5px;
+            text-align: center;
+            border-radius: 15px;
+            font-size: 12px;
+            line-height: 30px;
+        }
+
+        .marker-cluster span {
+            line-height: 30px;
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #c62828;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        /* ===== TABLET BREAKPOINT ===== */
+        @media (max-width: 1024px) {
+            .map-header {
+                padding: 12px 20px;
+            }
+
+            .leaflet-control-layers {
+                max-width: 300px;
+            }
+        }
+
+        /* ===== MOBILE BREAKPOINT ===== */
+        @media (max-width: 768px) {
+            .map-header {
+                top: 5px;
+                padding: 10px 15px;
+                max-width: 90vw;
+            }
+
+            .map-title {
+                font-size: 1.1rem;
+            }
+
+            .map-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .leaflet-popup-content {
+                max-width: 280px;
+                font-size: 0.9em;
+                margin: 12px;
+            }
+
+            .leaflet-control-layers {
+                max-width: 90vw;
+                font-size: 0.9em;
+            }
+
+            /* Larger touch targets */
+            .leaflet-control-zoom a {
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 20px;
+            }
+
+            .leaflet-control-layers-toggle {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* ===== SMALL MOBILE ===== */
+        @media (max-width: 480px) {
+            .map-header {
+                position: relative;
+                transform: none;
+                left: 0;
+                margin: 5px;
+            }
+
+            .leaflet-popup-content {
+                max-width: 240px;
+            }
+        }
+        </style>
+        <title>Racial Terror in America: A Historical Map</title>
+    </head>
+    <body>
+        <div id="loading-overlay">
+            <div style="text-align: center;">
+                <div class="spinner"></div>
+                <p style="color: #333; font-size: 1.1rem;">Loading Historical Data...</p>
+            </div>
+        </div>
+
+        <div class="map-header">
+            <h1 class="map-title">Racial Terror in America</h1>
+            <p class="map-subtitle">A Historical Map of Church Bombings and Racial Killings</p>
+        </div>
+
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/leaflet.markercluster.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="data/churchbombigs_2_1.js"></script>
+        <script src="data/RaceRiotsSheet1_2.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[13.644052989389479,-131.51005229753582],[50.84293117178991,-49.43439135804115]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleMaps_0');
+        map.getPane('pane_GoogleMaps_0').style.zIndex = 400;
+        var layer_GoogleMaps_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleMaps_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_GoogleMaps_0;
+        map.addLayer(layer_GoogleMaps_0);
+        function pop_churchbombigs_2_1(feature, layer) {
+            var props = feature.properties;
+            var location = (props['City'] || '') + (props['City'] && props['State'] ? ', ' : '') + (props['State'] || '');
+            var churchName = props['Church Name'] || 'Unknown Location';
+            var year = props['Year'] || '';
+            var buildingType = props['Building Type'] || '';
+            var attackType = props['Attack Type'] || '';
+            var deathToll = props['Death Toll'];
+            var narrative = props['Narrative'] || '';
+
+            // Compact header with location and year
+            var locationYear = location + (location && year ? ' • ' : '') + year;
+
+            var popupContent = '<div>\
+                <div class="popup-header">' + churchName + '</div>\
+                <div style="font-size: 0.9em; color: #666; margin: -8px 0 12px 0;">' + locationYear + '</div>';
+
+            // Attack type (if available)
+            if (attackType) {
+                popupContent += '<div style="margin: 8px 0; color: #555;">\
+                    <strong>' + attackType + '</strong>' + (buildingType ? ' • ' + buildingType : '') + '\
+                </div>';
+            }
+
+            // Death toll - prominently displayed
+            if (deathToll !== null && deathToll !== undefined && deathToll > 0) {
+                popupContent += '<div class="death-toll-highlight">\
+                    🪦 ' + deathToll + ' ' + (deathToll === 1 ? 'death' : 'deaths') + '\
+                </div>';
+            }
+
+            // Historical narrative - the main story
+            if (narrative) {
+                popupContent += '<div class="popup-narrative">\
+                    ' + autolinker.link(narrative) + '\
+                </div>';
+            }
+
+            popupContent += '</div>';
+
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(popupContent, e.popup);
+			});
+			layer.bindPopup(popupContent, { maxHeight: 400 });
+        }
+        function style_churchbombigs_2_1_0(feature) {
+            var context = {
+                feature: feature,
+                variables: {}
+            };
+            // Start of if blocks and style check logic
+            if (exp_churchbombigs_2_1rule0_eval_expression(context)) {
+                  return {
+                pane: 'pane_churchbombigs_2_1',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/churchbombigs_2_1.svg',
+            iconSize: [25, 25]  // Rounded for consistency
+        }),
+                interactive: true,
+            };
+                }
+                else if (exp_churchbombigs_2_1rule1_eval_expression(context)) {
+                  return {
+                pane: 'pane_churchbombigs_2_1',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/churchbombigs_2_1.svg',
+            iconSize: [23, 23]  // Rounded from 22.8px
+        }),
+                interactive: true,
+            };
+                }
+                else if (exp_churchbombigs_2_1rule2_eval_expression(context)) {
+                  return {
+                pane: 'pane_churchbombigs_2_1',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/churchbombigs_2_1.svg',
+            iconSize: [24, 24]  // Rounded from 24.32px
+        }),
+                interactive: true,
+            };
+                }
+            else {
+                // Handle null death toll - determine icon by building type
+                var buildingType = feature.properties['Building Type'] || '';
+                var isHouse = buildingType.toLowerCase().includes('house') || buildingType.toLowerCase().includes('home');
+
+                return {
+                    pane: 'pane_churchbombigs_2_1',
+                    rotationAngle: 0.0,
+                    rotationOrigin: 'center center',
+                    icon: L.icon({
+                        iconUrl: isHouse ? 'legend/churchbombigs_2_1_House2.png' : 'legend/churchbombigs_2_1_Church1.png',
+                        iconSize: [24, 24]
+                    }),
+                    interactive: true,
+                };
+            }
+        }
+        map.createPane('pane_churchbombigs_2_1');
+        map.getPane('pane_churchbombigs_2_1').style.zIndex = 401;
+        map.getPane('pane_churchbombigs_2_1').style['mix-blend-mode'] = 'normal';
+
+        // Create marker cluster group for church bombings
+        var cluster_churchbombigs_2_1 = L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true,
+            disableClusteringAtZoom: 15,  // Individual markers show at zoom 15+
+            maxClusterRadius: 60,  // Cluster markers within 60 pixels
+            spiderfyDistanceMultiplier: 1.5,  // More spread in spider legs
+            iconCreateFunction: function(cluster) {
+                var count = cluster.getChildCount();
+                var className = 'marker-cluster ';
+                if (count < 5) {
+                    className += 'marker-cluster-small';
+                } else if (count < 10) {
+                    className += 'marker-cluster-medium';
+                } else {
+                    className += 'marker-cluster-large';
+                }
+                return L.divIcon({
+                    html: '<div><span>' + count + '</span></div>',
+                    className: className,
+                    iconSize: L.point(40, 40)
+                });
+            }
+        });
+
+        var layer_churchbombigs_2_1 = new L.geoJson(json_churchbombigs_2_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_churchbombigs_2_1',
+            layerName: 'layer_churchbombigs_2_1',
+            pane: 'pane_churchbombigs_2_1',
+            onEachFeature: pop_churchbombigs_2_1,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_churchbombigs_2_1_0(feature));
+            },
+        });
+
+        // Add GeoJSON layer to cluster group, then cluster to map
+        cluster_churchbombigs_2_1.addLayer(layer_churchbombigs_2_1);
+        bounds_group.addLayer(cluster_churchbombigs_2_1);
+        map.addLayer(cluster_churchbombigs_2_1);
+        function pop_RaceRiotsSheet1_2(feature, layer) {
+            var props = feature.properties;
+            var name = props['Name'] || 'Unknown Event';
+            var location = (props['City'] || '') + (props['City'] && props['State'] ? ', ' : '') + (props['State'] || '');
+            var year = props['Year'] || '';
+            var narrative = props['Narrive'] || ''; // Typo in original data
+            var deathToll = props['Death Toll (Official)'];
+            var type = props['Type'] || '';
+            var reference = props['Reference'] || '';
+
+            // Compact header with location and year
+            var locationYear = location + (location && year ? ' • ' : '') + year;
+
+            var popupContent = '<div>\
+                <div class="popup-header">' + name + '</div>\
+                <div style="font-size: 0.9em; color: #666; margin: -8px 0 12px 0;">' + locationYear + '</div>';
+
+            // Event type (if available)
+            if (type) {
+                popupContent += '<div style="margin: 8px 0; color: #555;">\
+                    <strong>' + type + '</strong>\
+                </div>';
+            }
+
+            // Death toll - prominently displayed with context
+            if (deathToll !== null && deathToll !== undefined) {
+                if (deathToll === 0) {
+                    popupContent += '<div class="death-toll-highlight" style="background: #fff3e0; border-left-color: #f57c00; color: #e65100;">\
+                        ⚠️ No official deaths recorded\
+                    </div>\
+                    <div style="font-size: 0.85em; color: #666; font-style: italic; margin: -4px 0 8px 0;">\
+                        Note: Actual casualties may have been undercounted\
+                    </div>';
+                } else {
+                    popupContent += '<div class="death-toll-highlight">\
+                        🪦 Official death toll: ' + deathToll + '\
+                    </div>';
+                    // Add context about underreporting
+                    if (deathToll > 10) {
+                        popupContent += '<div style="font-size: 0.85em; color: #666; font-style: italic; margin: -4px 0 8px 0;">\
+                            Actual casualties likely higher than official records\
+                        </div>';
+                    }
+                }
+            }
+
+            // Historical narrative - the main story
+            if (narrative) {
+                popupContent += '<div class="popup-narrative">\
+                    ' + autolinker.link(narrative) + '\
+                </div>';
+            }
+
+            popupContent += '</div>';
+
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(popupContent, e.popup);
+			});
+			layer.bindPopup(popupContent, { maxHeight: 400 });
+        }
+
+        function style_RaceRiotsSheet1_2_0(feature) {
+            // Improved icon scaling for better visibility
+            // Minimum size increased from 3.8px to 14px for usability
+            if (feature.properties['Death Toll (Official)'] >= 0.000000 && feature.properties['Death Toll (Official)'] <= 0.000000 ) {
+                return {
+                pane: 'pane_RaceRiotsSheet1_2',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/RaceRiotsSheet1_2.svg',
+            iconSize: [14, 14]  // Increased from 3.8px for visibility
+        }),
+                interactive: true,
+            }
+            }
+            if (feature.properties['Death Toll (Official)'] >= 0.000000 && feature.properties['Death Toll (Official)'] <= 4.600000 ) {
+                return {
+                pane: 'pane_RaceRiotsSheet1_2',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/RaceRiotsSheet1_2.svg',
+            iconSize: [16, 16]  // Increased from 10.45px for visibility
+        }),
+                interactive: true,
+            }
+            }
+            if (feature.properties['Death Toll (Official)'] >= 4.600000 && feature.properties['Death Toll (Official)'] <= 34.200000 ) {
+                return {
+                pane: 'pane_RaceRiotsSheet1_2',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/RaceRiotsSheet1_2.svg',
+            iconSize: [20, 20]  // Rounded from 17.1px
+        }),
+                interactive: true,
+            }
+            }
+            if (feature.properties['Death Toll (Official)'] >= 34.200000 && feature.properties['Death Toll (Official)'] <= 72.000000 ) {
+                return {
+                pane: 'pane_RaceRiotsSheet1_2',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/RaceRiotsSheet1_2.svg',
+            iconSize: [26, 26]  // Rounded from 23.75px, increased for better gradation
+        }),
+                interactive: true,
+            }
+            }
+            if (feature.properties['Death Toll (Official)'] >= 72.000000 && feature.properties['Death Toll (Official)'] <= 800.000000 ) {
+                return {
+                pane: 'pane_RaceRiotsSheet1_2',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/RaceRiotsSheet1_2.svg',
+            iconSize: [34, 34]  // Increased from 30.4px for better visual hierarchy
+        }),
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_RaceRiotsSheet1_2');
+        map.getPane('pane_RaceRiotsSheet1_2').style.zIndex = 402;
+        map.getPane('pane_RaceRiotsSheet1_2').style['mix-blend-mode'] = 'normal';
+        var layer_RaceRiotsSheet1_2 = new L.geoJson(json_RaceRiotsSheet1_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_RaceRiotsSheet1_2',
+            layerName: 'layer_RaceRiotsSheet1_2',
+            pane: 'pane_RaceRiotsSheet1_2',
+            onEachFeature: pop_RaceRiotsSheet1_2,
+            filter: function(feature) {
+                // Only display features with valid geometry and coordinates
+                return feature.geometry !== null && feature.geometry.coordinates !== null;
+            },
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_RaceRiotsSheet1_2_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_RaceRiotsSheet1_2);
+        map.addLayer(layer_RaceRiotsSheet1_2);
+        var overlaysTree = [
+            {label: 'Race Riots (sized by death toll)', layer: layer_RaceRiotsSheet1_2},
+            {label: 'Church Bombings & Attacks', layer: cluster_churchbombigs_2_1},
+            {label: "Google Maps", layer: layer_GoogleMaps_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+
+        // Hide loading overlay when map is ready
+        map.whenReady(function() {
+            setTimeout(function() {
+                var overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(function() {
+                        overlay.style.display = 'none';
+                    }, 300);
+                }
+            }, 500);
+        });
+        </script>
+    </body>
+</html>
