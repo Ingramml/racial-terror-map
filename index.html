@@ -221,17 +221,17 @@
                 font-size: 0.9em;
             }
 
-            /* Larger touch targets */
+            /* Larger touch targets - 44px minimum for accessibility */
             .leaflet-control-zoom a {
-                width: 40px;
-                height: 40px;
-                line-height: 40px;
+                width: 44px;
+                height: 44px;
+                line-height: 44px;
                 font-size: 20px;
             }
 
             .leaflet-control-layers-toggle {
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
             }
         }
 
@@ -246,6 +246,62 @@
 
             .leaflet-popup-content {
                 max-width: 240px;
+            }
+
+            /* Reduce popup padding on small screens */
+            .popup-narrative {
+                padding: 8px;
+                font-size: 0.95em;
+            }
+
+            .death-toll-highlight {
+                padding: 6px 10px;
+                font-size: 0.95em;
+            }
+
+            /* Ensure cluster badges are tappable */
+            .marker-cluster {
+                cursor: pointer;
+                touch-action: manipulation;
+            }
+        }
+
+        /* Prevent text selection on map controls */
+        .leaflet-control,
+        .leaflet-control a,
+        .marker-cluster {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Improve touch feedback */
+        .leaflet-control-zoom a:active,
+        .leaflet-control-layers-toggle:active,
+        .marker-cluster:active {
+            opacity: 0.7;
+        }
+
+        /* ===== LANDSCAPE MOBILE ===== */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .map-header {
+                padding: 8px 15px;
+            }
+
+            .map-title {
+                font-size: 1rem;
+            }
+
+            .map-subtitle {
+                font-size: 0.75rem;
+            }
+
+            .leaflet-popup-content {
+                max-width: 300px;
+                max-height: 200px;
+                overflow-y: auto;
             }
         }
         </style>
