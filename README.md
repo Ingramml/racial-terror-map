@@ -2,9 +2,7 @@
 
 An interactive web map documenting historical incidents of racial terror in America, including church bombings and race riots. This educational resource aims to preserve the memory of these tragic events and facilitate learning about this critical period in American history.
 
-🌐 **[View Live Map](https://yourusername.github.io/repository-name/)** *(Update this URL after deploying)*
-
-![Map Preview](images/preview.png) *(Optional: Add a screenshot)*
+🌐 **[View Live Map](https://yourusername.github.io/repository-name/)**
 
 ## Project Overview
 
@@ -49,57 +47,7 @@ This map visualizes two datasets:
 - **Custom CSS** - Responsive design and styling
 - **GeoJSON** - Data format for geographic features
 
-## Deployment to GitHub Pages
 
-### Option 1: Using GitHub Web Interface
-
-1. Create a new repository on GitHub
-2. Upload all files from this project
-3. Go to **Settings** → **Pages**
-4. Under "Source", select **main** branch and **/ (root)** folder
-5. Click **Save**
-6. Your map will be available at: `https://yourusername.github.io/repository-name/`
-
-### Option 2: Using Git Command Line
-
-```bash
-# Initialize git repository (if not already)
-git init
-
-# Add all files
-git add .
-
-# Commit changes
-git commit -m "Initial commit: Racial Terror historical map"
-
-# Add remote repository (create on GitHub first)
-git remote add origin https://github.com/yourusername/repository-name.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
-
-# Enable GitHub Pages
-# Go to repository Settings → Pages → Select main branch → Save
-```
-
-### Option 3: Automatic Deployment Script
-
-```bash
-# Create a deployment script
-cat > deploy.sh << 'EOF'
-#!/bin/bash
-git add .
-git commit -m "Update: $(date '+%Y-%m-%d %H:%M:%S')"
-git push origin main
-echo "Deployed! Map will update at https://yourusername.github.io/repository-name/"
-EOF
-
-chmod +x deploy.sh
-
-# Run deployment
-./deploy.sh
-```
 
 ## Adding New Data Points
 
@@ -139,13 +87,6 @@ This map is designed for:
 - **Research** - Academic study of racial violence
 - **Public Awareness** - Community education and remembrance
 - **Historical Preservation** - Documenting and preserving historical events
-
-### Recommended Usage
-
-- Use as a supplement to textbooks and primary sources
-- Encourage students to research individual events in depth
-- Facilitate discussions about historical context and lasting impacts
-- Promote critical thinking about sources and historical narratives
 
 ## Data Sources
 
@@ -227,17 +168,3 @@ This project is intended for educational and historical preservation purposes. P
 - Historical data compiled from various scholarly sources
 - Map technology powered by Leaflet.js and QGIS
 - Base maps provided by Google Maps
-
-## Contact
-
-For questions, corrections, or contributions, please:
-- Open an issue on GitHub
-- Submit a pull request
-- Contact: [Your email or contact method]
-
----
-
-**Remember**: This map documents real historical tragedies. Please approach this material with the respect and gravity it deserves.
-
-*Created: November 2025*
-*Last Updated: November 3, 2025*
